@@ -12,7 +12,7 @@
 
 static const char* SERVER_ADDR = "127.0.0.1";
 static const int SERVER_PORT = 3000;
-static const int BACKLOG_SIZE = 2;
+static const int BACKLOG_SIZE = 5;
 static const int REQUEST_LINE_CHARS = 50;
 
 int create_server() {
