@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -14,6 +15,7 @@ static const char* SERVER_ADDR = "127.0.0.1";
 static const int SERVER_PORT = 3000;
 static const int BACKLOG_SIZE = 5;
 static const int REQUEST_LINE_CHARS = 50;
+static int EXIT = 0;
 
 int create_server() {
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -76,7 +78,7 @@ void handle_connection(int connection_fd) {
     while(1) {
         memset(&buffer, '\0', sizeof(buffer));
         bytes_read = read(connection_fd, &buffer, sizeof(char) * REQUEST_LINE_CHARS);
-        
+
         if (bytes_read <= 0) {
             printf("thread %lu | no bytes read, closing connection\n", thread_id);
             break;
@@ -87,13 +89,32 @@ void handle_connection(int connection_fd) {
     }
 }
 
+static void exit_signal() {
+    printf("Exit signal trapped...\n");
+
+    EXIT = 1;
+}
+
+static void trap_signals() {
+    struct sigaction action;
+
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = exit_signal;
+
+    sigaction(SIGINT, &action, 0);
+    sigaction(SIGTERM, &action, 0);
+}
+
+
 int main() {
+    trap_signals();
+
     int server_fd = create_server();
     if (server_fd == -1) {
         return 1;
     }
 
-    while(1) {
+    while(EXIT == 0) {
         int connection_fd = client_connection(server_fd);
         handle_connection(connection_fd);
         close(connection_fd);
