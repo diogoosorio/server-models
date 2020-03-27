@@ -13,8 +13,8 @@
 
 static const char* SERVER_ADDR = "127.0.0.1";
 static const int SERVER_PORT = 3000;
-static const int BACKLOG_SIZE = 5;
-static const int REQUEST_LINE_CHARS = 50;
+static const int BACKLOG_SIZE = 20;
+static const int BUSY_WORK_SECONDS = 2;
 static int EXIT = 0;
 
 /**
@@ -28,7 +28,7 @@ static int EXIT = 0;
  * 
  * 3. listen() - marks the socket as being passive (i.e. used to accept incoming connections)
  */
-int create_server() {
+static int create_server() {
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_fd == -1) {
         printf("Unable to create the socket\n");
@@ -58,7 +58,7 @@ int create_server() {
 /**
  * Accepts a new connection over the socket
  */
-int accept_connection(int server_fd) {
+static int accept_connection(int server_fd) {
     int listen_result = listen(server_fd, BACKLOG_SIZE);
     if (listen_result == -1) {
         printf("Failed to transition the socket into passive mode\n");
@@ -84,25 +84,44 @@ int accept_connection(int server_fd) {
 
 /**
  * Reads the data sent over by the client over the socket
+ *
+ * Our protocol is simple:
+ *
+ *  * All messages are ASCII encoded (1 byte per char is assumed)
+ *  * All messages sent to the server are terminated with a '\3' character
+ *  * A 'goodbye\0' message signifies that the communcation is to end
  */
-void handle_connection(int connection_fd) {
-    long thread_id = (long)pthread_self();
-    printf("thread %lu | processing a new client\n", thread_id);
+static void handle_connection(int connection_fd) {
+    pid_t pid = getpid();
+    printf("pid %d | processing a new client\n", pid);
 
-    char buffer[REQUEST_LINE_CHARS + 1];
+    char delimiter = '\3';
+    char buffer[50];
     int bytes_read;
 
     while(1) {
-        memset(&buffer, '\0', sizeof(buffer));
-        bytes_read = read(connection_fd, &buffer, sizeof(char) * REQUEST_LINE_CHARS);
+        memset(&buffer, ' ', sizeof(buffer));
+        bytes_read = 0;
 
-        if (bytes_read <= 0) {
-            printf("thread %lu | no bytes read, closing connection\n", thread_id);
+        do {
+            bytes_read = read(connection_fd, &buffer, sizeof(buffer) - 1);
+        } while (bytes_read >= 0 && strchr(buffer, delimiter) == NULL);
+
+        if (bytes_read < 0) {
+            printf("pid %d | error receiving data | %s\n", pid, buffer);
             break;
         }
 
-        buffer[REQUEST_LINE_CHARS] = '\0';
-        printf("thread %lu | finished reading line | %s\n", thread_id, buffer);
+        if (strncmp(buffer, "goodbye", 7) == 0) {
+            printf("pid %d | received goodbye | %s\n", pid, buffer);
+            break;
+        } else {
+            printf("pid %d | finished reading line | %s\n", pid, buffer);
+            printf("pid %d | simulating some busy work for %d seconds \n", pid, BUSY_WORK_SECONDS);
+            sleep(BUSY_WORK_SECONDS);
+            write(connection_fd, "ack", 3);
+            printf("pid %d | sent ack \n", pid);
+        }
     }
 }
 
