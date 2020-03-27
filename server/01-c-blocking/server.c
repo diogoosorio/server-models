@@ -89,7 +89,7 @@ static int accept_connection(int server_fd) {
  *
  *  * All messages are ASCII encoded (1 byte per char is assumed)
  *  * All messages sent to the server are terminated with a '\3' character
- *  * A 'goodbye\0' message signifies that the communcation is to end
+ *  * A 'goodbye\3' message signifies that the communcation is to end
  */
 static void handle_connection(int connection_fd) {
     pid_t pid = getpid();

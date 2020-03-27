@@ -126,22 +126,38 @@ int accept_connection(int server_fd, int epoll_fd) {
 }
 
 /**
- * Reads the payload from an accept()'ed connection and
- * prints the received payload
+ * Reads the data sent over by the client over the socket
+ *
+ * Our protocol is simple:
+ *
+ *  * All messages are ASCII encoded (1 byte per char is assumed)
+ *  * All messages sent to the server are terminated with a '\3' character
+ *  * A 'goodbye\3' message signifies that the communcation is to end
  */
 void handle_connection(int connection_fd) {
-    char buffer[REQUEST_LINE_CHARS + 1];
-    int bytes_read;
+    pid_t pid = getpid();
+    printf("pid %d | processing a new client\n", pid);
 
-    memset(&buffer, '\0', sizeof(buffer));
-    bytes_read = read(connection_fd, &buffer, sizeof(char) * REQUEST_LINE_CHARS);
-    
-    if (bytes_read <= 0) {
-        return;
+    char delimiter = '\3';
+    char buffer[50];
+    int bytes_read = 0;
+
+    memset(&buffer, ' ', sizeof(buffer));
+    bytes_read = read(connection_fd, &buffer, sizeof(buffer) - 1);
+
+    if (bytes_read < 0) {
+        printf("pid %d | error receiving data | %s\n", pid, buffer);
+        break;
     }
 
-    buffer[REQUEST_LINE_CHARS] = '\0';
-    printf("%s\n", buffer);
+    if (strncmp(buffer, "goodbye", 7) == 0) {
+        printf("pid %d | received goodbye | %s\n", pid, buffer);
+        break;
+    } else {
+        printf("pid %d | finished reading line | %s\n", pid, buffer);
+        write(connection_fd, "ack", 3);
+        printf("pid %d | sent ack \n", pid);
+    }
 }
 
 /**
