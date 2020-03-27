@@ -12,50 +12,51 @@ SERVER_PORT = 3000
 
 REQUEST_LINE_CHARS = 50
 REQUEST_LINES = 5
-REQUEST_THROTTLING = 2
-REQUEST_LINE_PREFIX = "thread {} - "
-
-def format_message(message, thread_id):
-    prefix_size = len(REQUEST_LINE_PREFIX)
-    message_size = len(message)
-
-    if (message_size + prefix_size > REQUEST_LINE_CHARS):
-        message = message[0:(REQUEST_LINE_CHARS - prefix_size)]
-
-    message = REQUEST_LINE_PREFIX.format(thread_id) + message
-    padding = REQUEST_LINE_CHARS - len(message)
-    padded_message = message + (' ' * padding)
-
-    return padded_message.encode('ascii')
+REQUEST_LINE_PREFIX = "client {} - "
 
 
-def launch_client(thread_id):
+def send_message(client_id, client, content, wait_ack = True):
+    # terminates each message with a "ETX" character
+    message = (content + "\3").encode('ascii')
+    client.send(message)
+    print("%s | client %d | sent %s" % (datetime.now(), client_id, content,))
+
+    # waits for a 3 character payload from the server with an ack
+    if wait_ack:
+        received_message = ""
+        while len(received_message) < 3:
+            segment = client.recv(1024)
+            received_message += segment.decode('utf-8')
+
+        print("%s | client %d | received ack: (%s)" % (datetime.now(), client_id, received_message,))
+
+
+def launch_client(client_id, throttling):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
         client.connect((SERVER_ADDRESS, SERVER_PORT))
-        print("%s | thread %d | client connected" % (datetime.now(), thread_id))
-
-        hello_message = format_message("start of message", thread_id);
-        client.send(hello_message)
-        print("%s | thread %d | sent hello" % (datetime.now(), thread_id,))
+        print("%s | client %d | client connected" % (datetime.now(), client_id))
 
         for index in range(0, REQUEST_LINES):
-            client.send(format_message(str(index) * REQUEST_LINE_CHARS, thread_id))
-            print("%s | thread %d | sent line %d" % (datetime.now(), thread_id, index,))
-            time.sleep(REQUEST_THROTTLING)
+            # send a line of data to the server
+            send_message(client_id, client, ("package %d" % (index,)))
 
-        goodbye_message = format_message("goodbye", thread_id)
-        client.send(goodbye_message)
-        print("%s | thread %d | sent goodbye" % (datetime.now(), thread_id))
+            # if argv[2] was defined, wait x seconds before sending the next line
+            if throttling > 0 and index < (REQUEST_LINES - 1):
+                time.sleep(throttling)
 
-    print("%s | thread %d | server closed connection" % (datetime.now(), thread_id))
+        # send goodby to the server
+        send_message(client_id, client, "goodbye", False)
+
+    print("%s | client %d | done!" % (datetime.now(), client_id))
 
 
 if __name__ == '__main__':
     num_threads = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    req_throttling = int(sys.argv[2]) if len(sys.argv) > 2 else 0
     threads = []
 
     for i in range(0, num_threads):
-        thread = threading.Thread(target=launch_client, args=(i,))
+        thread = threading.Thread(target=launch_client, args=(i, req_throttling,))
         thread.start()
         threads.append(thread)
 
