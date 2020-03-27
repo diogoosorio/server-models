@@ -1,5 +1,3 @@
-#include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -17,17 +15,6 @@ static const int BACKLOG_SIZE = 5;
 static const int REQUEST_LINE_CHARS = 50;
 static int EXIT = 0;
 
-/**
- * Creates the socket and binds it to the correct address/port
- *
- * 1. socket() - creates the actual socket
- *  AF_INET -> IPv4
- *  SOCK_STREAM -> TCP
- *
- * 2. bind() - binds it to the address/port
- * 
- * 3. listen() - marks the socket as being passive (i.e. used to accept incoming connections)
- */
 int create_server() {
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_fd == -1) {
@@ -55,10 +42,7 @@ int create_server() {
     return socket_fd;
 }
 
-/**
- * Accepts a new connection over the socket
- */
-int accept_connection(int server_fd) {
+int client_connection(int server_fd) {
     int listen_result = listen(server_fd, BACKLOG_SIZE);
     if (listen_result == -1) {
         printf("Failed to transition the socket into passive mode\n");
@@ -82,9 +66,6 @@ int accept_connection(int server_fd) {
     return connection_fd;
 }
 
-/**
- * Reads the data sent over by the client over the socket
- */
 void handle_connection(int connection_fd) {
     long thread_id = (long)pthread_self();
     printf("thread %lu | processing a new client\n", thread_id);
@@ -106,19 +87,12 @@ void handle_connection(int connection_fd) {
     }
 }
 
-/**
- * Signal trap function, toggles an exit flag to instruct the proccess
- * to stop executing
- */
 static void exit_signal() {
     printf("Exit signal trapped...\n");
 
     EXIT = 1;
 }
 
-/**
- * Registers a basic trap function for SIGINT and SIGTERM
- */
 static void trap_signals() {
     struct sigaction action;
 
@@ -139,7 +113,7 @@ int main() {
     }
 
     while(EXIT == 0) {
-        int connection_fd = accept_connection(server_fd);
+        int connection_fd = client_connection(server_fd);
         handle_connection(connection_fd);
         close(connection_fd);
     }
