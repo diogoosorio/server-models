@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <limits.h>
 
 enum QueueError {
@@ -9,6 +10,7 @@ enum QueueError {
 struct Queue {
     int head, tail, size, capacity;
     int* items;
+    pthread_mutex_t m_queue;
 };
 
 void freeQueue(struct Queue* queue);
