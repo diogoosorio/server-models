@@ -12,6 +12,7 @@ static void handle_connection(int connection_fd) {
     int bytes_read;
 
     while(1) {
+        memset(&buffer, ' ', sizeof(buffer));
         bytes_read = read_line(connection_fd, buffer, 50);
 
         if (bytes_read < 0) {
