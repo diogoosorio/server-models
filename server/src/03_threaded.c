@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include "../lib/queue.h"
+#include "./lib/queue.h"
 
 int main() {
     struct Queue* queue = createQueue(5);
