@@ -4,11 +4,11 @@
 #include <strings.h>
 #include <unistd.h>
 #include "./lib/server.h"
+#include "./lib/signals.h"
 
 static const int BUSY_WORK_SECONDS = 2;
 static const int NUMBER_WORKERS = 5;
 static int WORKER_PIDS[5];
-static int EXIT = 0;
 
 static void handle_connection(int connection_fd) {
     pid_t pid = getpid();
@@ -39,8 +39,8 @@ static void handle_connection(int connection_fd) {
     }
 }
 
-static int start_worker(int server_fd) {
-    while (EXIT == 0) {
+static int start_worker(int server_fd, int *exit) {
+    while (*exit == 0) {
         int connection_fd = accept_connection(server_fd);
         handle_connection(connection_fd);
         close(connection_fd);
@@ -50,41 +50,17 @@ static int start_worker(int server_fd) {
     return 0;
 }
 
-static void kill_workers() {
-    for (int i = 0; i < NUMBER_WORKERS; i++) {
-        if (WORKER_PIDS[i] > 0) {
-            printf("pid %d | Sending SIGINT to pid: %d\n", getpid(), WORKER_PIDS[i]);
-            kill(WORKER_PIDS[i], SIGINT);
-        }
-    }
-
+static void wait_workers() {
     // this is extremely optimistic (e.g. what if the worker fails
     // to respect the signal?)...
     printf("pid: %d | Waiting for workers to kill themselves...\n", getpid());
     int waitpid;
     do { waitpid = wait(NULL); } while (waitpid > 0);
+    printf("pid: %d | Done! All workers commited suicied!\n", getpid());
 }
-
-static void exit_signal() {
-    printf("pid %d | Exit signal trapped...\n", getpid());
-
-    EXIT = 1;
-}
-
-static void trap_signals() {
-    struct sigaction action;
-
-    memset(&action, 0, sizeof(action));
-    action.sa_handler = exit_signal;
-
-    sigaction(SIGINT, &action, 0);
-    sigaction(SIGTERM, &action, 0);
-}
-
 
 int main() {
-    trap_signals();
-
+    int exit = 0;
     int server_fd = create_server();
     if (server_fd == -1) {
         return 1;
@@ -94,7 +70,7 @@ int main() {
         int forked = fork();
 
         if (forked == 0) {
-            return start_worker(server_fd);
+            return start_worker(server_fd, &exit);
         }
         
         if (forked == -1) {
@@ -107,14 +83,16 @@ int main() {
         }
     }
 
-    while(EXIT == 0) {
+    trap_exit(&exit);
+
+    while(exit == 0) {
         // do nothing... this is where a decent web-server would allocate
         // some time doing some recurrent sanity checks, for example check
         // if any of the works is unhealthy (using a shared memory address 
         // space to exchange data, for example) and kill them.
     }
 
-    kill_workers();
+    wait_workers();
     close(server_fd);
 
     return 0;
