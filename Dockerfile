@@ -15,7 +15,8 @@ RUN apt update && \
         ruby-full \
         python3 \
         curl \
-        apache2-utils
+        apache2-utils \
+        htop
 
 RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
