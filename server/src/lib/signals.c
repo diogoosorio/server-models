@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <strings.h>
+#include <string.h>
 
 int *exit_flag;
 

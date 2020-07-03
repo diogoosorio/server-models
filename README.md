@@ -78,6 +78,7 @@ The goal here was to get a grasp on what an "event loop" looks like and to factu
 
 Random sources I've used throughout the project:
 
+* [The method to epolls madness](https://medium.com/@copyconstruct/the-method-to-epolls-madness-d9d2d6378642)
 * [Unicorn webserver design info](https://yhbt.net/unicorn/DESIGN.html)
 * [Fun epoll quirks](https://medium.com/@copyconstruct/the-method-to-epolls-madness-d9d2d6378642)
 * [Epoll is fundamentally broken](https://idea.popcount.org/2017-02-20-epoll-is-fundamentally-broken-12/)

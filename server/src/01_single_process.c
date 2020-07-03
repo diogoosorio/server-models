@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <strings.h>
 #include <unistd.h>
+#include <string.h>
 #include "./lib/server.h"
 #include "./lib/signals.h"
 

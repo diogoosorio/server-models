@@ -1,5 +1,5 @@
 CC      = gcc
-CFLAGS  = -Wall -Wextra -ansi -pedantic -std=c99 -g
+CFLAGS  = -Wall -Wextra -ansi -pedantic -std=gnu99 -pthread -g
 SERVERS := $(wildcard src/*.c)
 
 all: $(SERVERS)

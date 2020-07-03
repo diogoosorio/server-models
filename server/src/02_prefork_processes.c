@@ -3,10 +3,12 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
+#include <string.h>
+#include <sys/wait.h>
 #include "./lib/server.h"
 #include "./lib/signals.h"
 
-static const int BUSY_WORK_SECONDS = 2;
+static const int BUSY_WORK_SECONDS = 1;
 static const int NUMBER_WORKERS = 5;
 static int WORKER_PIDS[5];
 

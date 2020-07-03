@@ -33,16 +33,17 @@ int create_server() {
 
     printf("Server listening on: %s:%d\n", SERVER_ADDR, SERVER_PORT);
 
-    return socket_fd;
-}
-
-int accept_connection(int server_fd) {
-    int listen_result = listen(server_fd, BACKLOG_SIZE);
+    int listen_result = listen(socket_fd, BACKLOG_SIZE);
     if (listen_result == -1) {
         printf("Failed to transition the socket into passive mode\n");
         return -1;
     }
 
+
+    return socket_fd;
+}
+
+int accept_connection(int server_fd) {
     struct sockaddr_in client_addr;
     int client_length = sizeof(client_addr);
     memset(&client_addr, '\0', sizeof(client_length));
