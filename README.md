@@ -80,6 +80,7 @@ Random sources I've used throughout the project:
 
 * [The method to epolls madness](https://medium.com/@copyconstruct/the-method-to-epolls-madness-d9d2d6378642)
 * [Unicorn webserver design info](https://yhbt.net/unicorn/DESIGN.html)
+* [Unicorn UNIX magic tricks](https://thorstenball.com/blog/2014/11/20/unicorn-unix-magic-tricks/)
 * [Fun epoll quirks](https://medium.com/@copyconstruct/the-method-to-epolls-madness-d9d2d6378642)
 * [Epoll is fundamentally broken](https://idea.popcount.org/2017-02-20-epoll-is-fundamentally-broken-12/)
 * [Julia's awesome explanation around epoll + accept](https://jvns.ca/blog/2017/06/03/async-io-on-linux--select--poll--and-epoll/)
